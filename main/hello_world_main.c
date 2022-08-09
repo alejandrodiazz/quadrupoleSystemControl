@@ -93,10 +93,7 @@ static void example_ledc_init(void* arg)
 #define a1res1  32
 #define a2res1  35
 
-#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1) | (1ULL<<a0res1k) | 
-        (1ULL<<a1res1k) | (1ULL<<a2res1k) | (1ULL<<a0res100) | (1ULL<<a1res100) | (1ULL<<a2res100) | 
-        (1ULL<<a0res10) | (1ULL<<a1res10) | (1ULL<<a2res10) | (1ULL<<a3res10) | (1ULL<<a0res1) | 
-        (1ULL<<a1res1) | (1ULL<<a2res1) )
+#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1) | (1ULL<<a0res1k) | (1ULL<<a1res1k) | (1ULL<<a2res1k) | (1ULL<<a0res100) | (1ULL<<a1res100) | (1ULL<<a2res100) | (1ULL<<a0res10) | (1ULL<<a1res10) | (1ULL<<a2res10) | (1ULL<<a3res10) | (1ULL<<a0res1) | (1ULL<<a1res1) | (1ULL<<a2res1) )
 #define GPIO_INPUT_IO_0     CONFIG_GPIO_INPUT_0
 #define GPIO_INPUT_IO_1     CONFIG_GPIO_INPUT_1
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0) | (1ULL<<GPIO_INPUT_IO_1))
@@ -104,27 +101,44 @@ static void example_ledc_init(void* arg)
 
 static QueueHandle_t gpio_evt_queue = NULL;
 
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-    uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
-}
 
-static void gpio_task_example(void* arg)
-{
-    uint32_t io_num;
-    for(;;) {
-        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
-        }
+static void setResistorValue(void* arg){
+    int resistance = (int) arg;
+    if(resistance>7000 || resistance<1){
+        printf("ERROR in RESISTANCE GIVEN\n");
+        return;
     }
+
+    uint8_t res1k = (int) (resistance / 1000);
+    gpio_set_level(a0res1k, (res1k>>0) & 1);    // extract the 1's place bit
+    gpio_set_level(a1res1k, (res1k>>1) & 1);    // 2's bit
+    gpio_set_level(a2res1k, (res1k>>2) & 1);     // 4's bit
+
+    resistance = resistance % 1000; 
+    uint8_t res100 = (int) (resistance / 100);
+    gpio_set_level(a0res100, (res100>>0) & 1);  // extract the 1's place bit
+    gpio_set_level(a1res100, (res100>>1) & 1);  // 2's bit
+    gpio_set_level(a2res100, (res100>>2) & 1);   // 4's bit
+
+    resistance = resistance % 100; 
+    uint8_t res10 = (int) (resistance / 10);
+    gpio_set_level(a0res10, (res10>>0) & 1);    // extract the 1's place bit
+    gpio_set_level(a1res10, (res10>>1) & 1);    // 2's bit
+    gpio_set_level(a2res10, (res10>>2) & 1);     // 4's bit
+    gpio_set_level(a3res10, (res10>>3) & 1);     // 8's bit
+
+    resistance = resistance % 10; 
+    uint8_t res1 = (uint8_t) resistance;
+    gpio_set_level(a0res1, (res1>>0) & 1);      // extract the 1's place bit
+    gpio_set_level(a1res1, (res1>>1) & 1);      // 2's bit
+    gpio_set_level(a2res1, (res1>>2) & 1);       // 4's bit
+
 }
 
 void app_main(void)
 {
 
     // START PWM STUFF !!!!!!!!!!!!!!!!!!!!!!!!
-
     // Set the LEDC peripheral configuration
     example_ledc_init(2650000);
     // Set duty to 50%
@@ -145,7 +159,6 @@ void app_main(void)
 
 
 
-
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
     //disable interrupt
@@ -161,40 +174,10 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
-    // //interrupt of rising edge
-    // io_conf.intr_type = GPIO_INTR_POSEDGE;
-    // //bit mask of the pins, use GPIO4/5 here
-    // io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    // //set as input mode
-    // io_conf.mode = GPIO_MODE_INPUT;
-    // //enable pull-up mode
-    // io_conf.pull_up_en = 1;
-    // gpio_config(&io_conf);
-
-    // //change gpio interrupt type for one pin
-    // gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
-
-    // //create a queue to handle gpio event from isr
-    // gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-    // //start gpio task
-    // xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
-
-    // //install gpio isr service
-    // gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    // //hook isr handler for specific gpio pin
-    // gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
-    // //hook isr handler for specific gpio pin
-    // gpio_isr_handler_add(GPIO_INPUT_IO_1, gpio_isr_handler, (void*) GPIO_INPUT_IO_1);
-
-    // //remove isr handler for gpio number.
-    // gpio_isr_handler_remove(GPIO_INPUT_IO_0);
-    // //hook isr handler for specific gpio pin again
-    // gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
-
-    // printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
-
     int frequency_count = 1730000;
-    int cnt = 0;
+    setResistorValue(300);  // set resistance to 300 ohms
+    printf("resistance: %d\n", 300);
+
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
         gpio_set_level(GPIO_OUTPUT_IO_1, 1); // latch enable pin set high so that that changes in input happen
@@ -206,17 +189,17 @@ void app_main(void)
         // Update duty to apply the new value
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
         printf("frequency: %d\n", frequency_count);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         frequency_count = frequency_count + 5000;
         if(frequency_count >1820000){
             frequency_count = 1730000; // reset to 400KHz
         }
 
-        for(int i = 30; i<399; i++){
-            setResistorValue(i);
-            printf("resistance: %d\n", res);
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-        }
+        // for(int i = 30; i<399; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", res);
+        //     vTaskDelay(200 / portTICK_PERIOD_MS);
+        // }
 
         // uint32_t time_delay = 2000; // 2 secs
         // uint32_t res = 30;
@@ -287,37 +270,3 @@ void app_main(void)
     }
 }
 
-
-static void setResistorValue(void* arg)
-{
-    int resistance = (int) arg;
-    if(resistance>7000 || resistance<1){
-        printf("ERROR in RESISTANCE GIVEN\n");
-        return
-    }
-
-    uint8_t res1k = (int) (resistance / 1000);
-    gpio_set_level(a0res1k, (res1k>>0) & 1);    // extract the 1's place bit
-    gpio_set_level(a1res1k, (res1k>>1) & 1);    // 2's bit
-    gpio_set_level(a2res1k, (res1k>>2) & 1;     // 4's bit
-
-    resistance = resistance % 1000; 
-    uint8_t res100 = (int) (resistance / 100);
-    gpio_set_level(a0res100, (res100>>0) & 1);  // extract the 1's place bit
-    gpio_set_level(a1res100, (res100>>1) & 1);  // 2's bit
-    gpio_set_level(a2res100, (res100>>2) & 1;   // 4's bit
-
-    resistance = resistance % 100; 
-    uint8_t res10 = (int) (resistance / 10);
-    gpio_set_level(a0res10, (res10>>0) & 1);    // extract the 1's place bit
-    gpio_set_level(a1res10, (res10>>1) & 1);    // 2's bit
-    gpio_set_level(a2res10, (res10>>2) & 1;     // 4's bit
-    gpio_set_level(a3res10, (res10>>3) & 1;     // 8's bit
-
-    resistance = resistance % 10; 
-    uint8_t res1 = (uint8_t) resistance;
-    gpio_set_level(a0res1, (res1>>0) & 1);      // extract the 1's place bit
-    gpio_set_level(a1res1, (res1>>1) & 1);      // 2's bit
-    gpio_set_level(a2res1, (res1>>2) & 1;       // 4's bit
-
-}
