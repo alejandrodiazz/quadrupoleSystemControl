@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/Users/alejandro/esp/DecadeResistorplusPWM/build/CMakeFiles/bootloader
+/Users/alejandro/esp/DecadeResistorplusPWM/build/CMakeFiles/bootloader.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/CMakeFiles/bootloader-complete.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/Users/alejandro/esp/DecadeResistorplusPWM/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
