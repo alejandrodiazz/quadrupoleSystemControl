@@ -193,7 +193,7 @@ void app_main(void)
 
     // printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 
-    int frequency_count = 1720000;
+    int frequency_count = 1730000;
     int cnt = 0;
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
@@ -206,10 +206,16 @@ void app_main(void)
         // Update duty to apply the new value
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
         printf("frequency: %d\n", frequency_count);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         frequency_count = frequency_count + 5000;
         if(frequency_count >1820000){
-            frequency_count = 1720000; // reset to 400KHz
+            frequency_count = 1730000; // reset to 400KHz
+        }
+
+        for(int i = 30; i<399; i++){
+            setResistorValue(i);
+            printf("resistance: %d\n", res);
+            vTaskDelay(200 / portTICK_PERIOD_MS);
         }
 
         // uint32_t time_delay = 2000; // 2 secs
@@ -241,10 +247,6 @@ void app_main(void)
         // setResistorValue(res);
         // printf("resistance: %d\n", res);
         // vTaskDelay(time_delay / portTICK_PERIOD_MS);
-        // res = 54;
-        // setResistorValue(res);
-        // printf("resistance: %d\n", res);
-        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
         // res = 60;
         // setResistorValue(res);
         // printf("resistance: %d\n", res);
@@ -270,14 +272,6 @@ void app_main(void)
         // printf("resistance: %d\n", res);
         // vTaskDelay(time_delay / portTICK_PERIOD_MS);
         // res = 300;
-        // setResistorValue(res);
-        // printf("resistance: %d\n", res);
-        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
-        // res = 400;
-        // setResistorValue(res);
-        // printf("resistance: %d\n", res);
-        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
-        // res = 500;
         // setResistorValue(res);
         // printf("resistance: %d\n", res);
         // vTaskDelay(time_delay / portTICK_PERIOD_MS);
