@@ -212,30 +212,89 @@ void app_main(void)
             frequency_count = 1720000; // reset to 400KHz
         }
 
+        // uint32_t time_delay = 2000; // 2 secs
+        // uint32_t res = 30;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 30;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 40;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 50;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 51;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 52;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 53;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 54;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 60;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 70;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 80;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 90;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 100;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 200;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 300;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 400;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 500;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 1000;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
+        // res = 2000;
+        // setResistorValue(res);
+        // printf("resistance: %d\n", res);
+        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
 
-        printf("cnt: %d\n", cnt++);
-        // turn on 1k
-        gpio_set_level(a0res1k, 1);
-        gpio_set_level(a1res1k, 0);
-        gpio_set_level(a2res1k, 0);
-        printf("on\n");
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        // turn on 2k
-        gpio_set_level(GPIO_OUTPUT_IO_2, 0);
-        gpio_set_level(GPIO_OUTPUT_IO_3, 1);
-        gpio_set_level(GPIO_OUTPUT_IO_4, 0);
-        printf("off\n");
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-
-
-        // gpio_set_level(GPIO_OUTPUT_IO_3, cnt % 2);
-        // vTaskDelay(1000 / portTICK_PERIOD_MS);
-        // gpio_set_level(GPIO_OUTPUT_IO_4, cnt % 2);
     }
 }
 
 
-static void gpio_task_example(void* arg)
+static void setResistorValue(void* arg)
 {
     int resistance = (int) arg;
     if(resistance>7000 || resistance<1){
