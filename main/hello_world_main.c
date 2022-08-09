@@ -244,27 +244,27 @@ static void gpio_task_example(void* arg)
     }
 
     uint8_t res1k = (int) (resistance / 1000);
-    gpio_set_level(a0res1k, (res1k>>0) & 1); // extract the 1's place bit
-    gpio_set_level(a1res1k, (res1k>>1) & 1); // 2's bit
-    gpio_set_level(a2res1k, (res1k>>2) & 1;  // 4's bit
+    gpio_set_level(a0res1k, (res1k>>0) & 1);    // extract the 1's place bit
+    gpio_set_level(a1res1k, (res1k>>1) & 1);    // 2's bit
+    gpio_set_level(a2res1k, (res1k>>2) & 1;     // 4's bit
 
     resistance = resistance % 1000; 
     uint8_t res100 = (int) (resistance / 100);
-    gpio_set_level(a0res100, (res100>>0) & 1); // extract the 1's place bit
-    gpio_set_level(a1res100, (res100>>1) & 1); // 2's bit
-    gpio_set_level(a2res100, (res100>>2) & 1;  // 4's bit
+    gpio_set_level(a0res100, (res100>>0) & 1);  // extract the 1's place bit
+    gpio_set_level(a1res100, (res100>>1) & 1);  // 2's bit
+    gpio_set_level(a2res100, (res100>>2) & 1;   // 4's bit
 
     resistance = resistance % 100; 
     uint8_t res10 = (int) (resistance / 10);
-    gpio_set_level(a0res10, (res10>>0) & 1); // extract the 1's place bit
-    gpio_set_level(a1res10, (res10>>1) & 1); // 2's bit
-    gpio_set_level(a2res10, (res10>>2) & 1;  // 4's bit
-    gpio_set_level(a3res10, (res10>>3) & 1;  // 8's bit
+    gpio_set_level(a0res10, (res10>>0) & 1);    // extract the 1's place bit
+    gpio_set_level(a1res10, (res10>>1) & 1);    // 2's bit
+    gpio_set_level(a2res10, (res10>>2) & 1;     // 4's bit
+    gpio_set_level(a3res10, (res10>>3) & 1;     // 8's bit
 
     resistance = resistance % 10; 
     uint8_t res1 = (uint8_t) resistance;
-    gpio_set_level(a0res1, (res1>>0) & 1); // extract the 1's place bit
-    gpio_set_level(a1res1, (res1>>1) & 1); // 2's bit
-    gpio_set_level(a2res1, (res1>>2) & 1;  // 4's bit
+    gpio_set_level(a0res1, (res1>>0) & 1);      // extract the 1's place bit
+    gpio_set_level(a1res1, (res1>>1) & 1);      // 2's bit
+    gpio_set_level(a2res1, (res1>>2) & 1;       // 4's bit
 
 }
