@@ -79,21 +79,21 @@ static void example_ledc_init(void* arg)
 
 #define GPIO_OUTPUT_IO_0    22
 #define GPIO_OUTPUT_IO_1    21
-#define a0res1k 19
-#define a1res1k 18
-#define a2res1k  5
-#define a0res100  17
-#define a1res100  16
-#define a2res100  12
-#define a0res10  14
-#define a1res10  27
-#define a2res10  26
-#define a3res10  25
-#define a0res1  33
-#define a1res1  32
-#define a2res1  35
+#define a0res1000 19
+#define a0res100 18
+#define a1res100  5
+#define a2res100  17
+#define a0res10  16 // have to skip 4 because that has the pwm!
+#define a1res10  12
+#define a2res10  14
+#define a3res10  27
+#define a0res1  26
+#define a1res1  25
+#define a2res1  33
+#define a3res1  32
+// #define a2res1  35
 
-#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1) | (1ULL<<a0res1k) | (1ULL<<a1res1k) | (1ULL<<a2res1k) | (1ULL<<a0res100) | (1ULL<<a1res100) | (1ULL<<a2res100) | (1ULL<<a0res10) | (1ULL<<a1res10) | (1ULL<<a2res10) | (1ULL<<a3res10) | (1ULL<<a0res1) | (1ULL<<a1res1) | (1ULL<<a2res1) )
+#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1) | (1ULL<<a0res1000) | (1ULL<<a0res100) | (1ULL<<a1res100) | (1ULL<<a2res100) | (1ULL<<a0res10) | (1ULL<<a1res10) | (1ULL<<a2res10) | (1ULL<<a3res10) | (1ULL<<a0res1) | (1ULL<<a1res1)| (1ULL<<a2res1)| (1ULL<<a3res1))
 #define GPIO_INPUT_IO_0     CONFIG_GPIO_INPUT_0
 #define GPIO_INPUT_IO_1     CONFIG_GPIO_INPUT_1
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0) | (1ULL<<GPIO_INPUT_IO_1))
@@ -101,6 +101,21 @@ static void example_ledc_init(void* arg)
 
 static QueueHandle_t gpio_evt_queue = NULL;
 
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+static void gpio_task_example(void* arg)
+{
+    uint32_t io_num;
+    for(;;) {
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+        }
+    }
+}
 
 static void setResistorValue(void* arg){
     int resistance = (int) arg;
@@ -109,29 +124,29 @@ static void setResistorValue(void* arg){
         return;
     }
 
-    uint8_t res1k = (int) (resistance / 1000);
-    gpio_set_level(a0res1k, (res1k>>0) & 1);    // extract the 1's place bit
-    gpio_set_level(a1res1k, (res1k>>1) & 1);    // 2's bit
-    gpio_set_level(a2res1k, (res1k>>2) & 1);     // 4's bit
+    uint8_t res1k = (uint8_t) (resistance / 1000);
+    gpio_set_level(a0res1000, ((res1k>>0) & 1));    // extract the 1's place bit
 
     resistance = resistance % 1000; 
-    uint8_t res100 = (int) (resistance / 100);
-    gpio_set_level(a0res100, (res100>>0) & 1);  // extract the 1's place bit
-    gpio_set_level(a1res100, (res100>>1) & 1);  // 2's bit
-    gpio_set_level(a2res100, (res100>>2) & 1);   // 4's bit
+    uint8_t res100 = (uint8_t) (resistance / 100);
+    gpio_set_level(a0res100, ((res100>>0) & 1));  // extract the 1's place bit
+    gpio_set_level(a1res100, ((res100>>1) & 1));  // 2's bit
+    gpio_set_level(a2res100, ((res100>>2) & 1));   // 4's bit
 
     resistance = resistance % 100; 
-    uint8_t res10 = (int) (resistance / 10);
-    gpio_set_level(a0res10, (res10>>0) & 1);    // extract the 1's place bit
-    gpio_set_level(a1res10, (res10>>1) & 1);    // 2's bit
-    gpio_set_level(a2res10, (res10>>2) & 1);     // 4's bit
-    gpio_set_level(a3res10, (res10>>3) & 1);     // 8's bit
+    uint8_t res10 = (uint8_t) (resistance / 10);
+    gpio_set_level(a0res10, ((res10>>0) & 1));    // extract the 1's place bit
+    gpio_set_level(a1res10, ((res10>>1) & 1));    // 2's bit
+    gpio_set_level(a2res10, ((res10>>2) & 1));     // 4's bit
+    gpio_set_level(a3res10, ((res10>>3) & 1));     // 8's bit
 
     resistance = resistance % 10; 
     uint8_t res1 = (uint8_t) resistance;
-    gpio_set_level(a0res1, (res1>>0) & 1);      // extract the 1's place bit
-    gpio_set_level(a1res1, (res1>>1) & 1);      // 2's bit
-    gpio_set_level(a2res1, (res1>>2) & 1);       // 4's bit
+    gpio_set_level(a0res1, ((res1>>0) & 1));      // extract the 1's place bit
+    gpio_set_level(a1res1, ((res1>>1) & 1));      // 2's bit
+    gpio_set_level(a2res1, ((res1>>2) & 1));       // 4's bit
+    gpio_set_level(a3res1, ((res1>>3) & 1));       // 8's bit
+    // printf("resistances: %d %d %d %d \n", res1k, res100, res10, res1);
 
 }
 
@@ -175,11 +190,21 @@ void app_main(void)
     gpio_config(&io_conf);
 
     int frequency_count = 1730000;
-    setResistorValue(300);  // set resistance to 300 ohms
-    printf("resistance: %d\n", 300);
+    // setResistorValue(30);  // set resistance to 300 ohms
+    // printf("resistance: %d\n", 30);
+
+    example_ledc_init(1770000);
+    // Set duty to 50%
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    // Update duty to apply the new value
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+
+    setResistorValue(6);
+    printf("resistance: %d\n", 6);
 
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         gpio_set_level(GPIO_OUTPUT_IO_1, 1); // latch enable pin set high so that that changes in input happen
 
 
@@ -195,10 +220,21 @@ void app_main(void)
             frequency_count = 1730000; // reset to 400KHz
         }
 
-        // for(int i = 30; i<399; i++){
+        
+        // for(int i = 6; i<12; i++){
         //     setResistorValue(i);
-        //     printf("resistance: %d\n", res);
+        //     printf("resistance: %d\n", i);
+        //     vTaskDelay(1200 / portTICK_PERIOD_MS);
+        // }
+        // for(int i = 12; i<30; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", i);
         //     vTaskDelay(200 / portTICK_PERIOD_MS);
+        // }
+        // for(int i = 30; i<100; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", i);
+        //     vTaskDelay(100 / portTICK_PERIOD_MS);
         // }
 
         // uint32_t time_delay = 2000; // 2 secs
@@ -259,10 +295,6 @@ void app_main(void)
         // printf("resistance: %d\n", res);
         // vTaskDelay(time_delay / portTICK_PERIOD_MS);
         // res = 1000;
-        // setResistorValue(res);
-        // printf("resistance: %d\n", res);
-        // vTaskDelay(time_delay / portTICK_PERIOD_MS);
-        // res = 2000;
         // setResistorValue(res);
         // printf("resistance: %d\n", res);
         // vTaskDelay(time_delay / portTICK_PERIOD_MS);
