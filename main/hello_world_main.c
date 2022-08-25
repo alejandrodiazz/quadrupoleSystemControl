@@ -189,18 +189,18 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
-    int frequency_count = 1730000;
+    int frequency_count = 1760000;
     // setResistorValue(30);  // set resistance to 300 ohms
     // printf("resistance: %d\n", 30);
 
-    example_ledc_init(1770000);
-    // Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+    // example_ledc_init(1770000);
+    // // Set duty to 50%
+    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    // // Update duty to apply the new value
+    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-    setResistorValue(6);
-    printf("resistance: %d\n", 6);
+    setResistorValue(50);
+    printf("resistance: %d\n", 50);
 
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
@@ -214,28 +214,28 @@ void app_main(void)
         // Update duty to apply the new value
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
         printf("frequency: %d\n", frequency_count);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-        frequency_count = frequency_count + 5000;
-        if(frequency_count >1820000){
-            frequency_count = 1730000; // reset to 400KHz
-        }
+        // vTaskDelay(500 / portTICK_PERIOD_MS);
+        // frequency_count = frequency_count + 5000;
+        // if(frequency_count >1900000){
+        //     frequency_count = 1600000; // reset to 400KHz
+        // }
 
         
-        // for(int i = 6; i<12; i++){
-        //     setResistorValue(i);
-        //     printf("resistance: %d\n", i);
-        //     vTaskDelay(1200 / portTICK_PERIOD_MS);
-        // }
-        // for(int i = 12; i<30; i++){
-        //     setResistorValue(i);
-        //     printf("resistance: %d\n", i);
-        //     vTaskDelay(200 / portTICK_PERIOD_MS);
-        // }
-        // for(int i = 30; i<100; i++){
-        //     setResistorValue(i);
-        //     printf("resistance: %d\n", i);
-        //     vTaskDelay(100 / portTICK_PERIOD_MS);
-        // }
+        for(int i = 6; i<12; i++){
+            setResistorValue(i);
+            printf("resistance: %d\n", i);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        for(int i = 12; i<30; i++){
+            setResistorValue(i);
+            printf("resistance: %d\n", i);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        for(int i = 30; i<100; i++){
+            setResistorValue(i);
+            printf("resistance: %d\n", i);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
 
         // uint32_t time_delay = 2000; // 2 secs
         // uint32_t res = 30;
