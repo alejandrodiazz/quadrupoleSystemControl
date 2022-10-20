@@ -23,7 +23,7 @@
 // START PWM STUFF !!!!!!!!!!!!!!!!!!!!!!!!
 #define LEDC_TIMER              LEDC_TIMER_0
 #define LEDC_MODE               LEDC_LOW_SPEED_MODE
-#define LEDC_OUTPUT_IO          (4) // Define the output GPIO
+#define LEDC_OUTPUT_IO          (16) // Define the output GPIO
 #define LEDC_CHANNEL            LEDC_CHANNEL_0
 #define LEDC_DUTY_RES           LEDC_TIMER_4_BIT // Set duty resolution to 13 bits
 #define LEDC_DUTY               (8) // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
@@ -189,18 +189,37 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
-    int frequency_count = 1760000;
+    int frequency_count = 2000000; //1760000;
     // setResistorValue(30);  // set resistance to 300 ohms
     // printf("resistance: %d\n", 30);
+    example_ledc_init(frequency_count);
+    // Set duty to 50%
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    // Update duty to apply the new value
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-    // example_ledc_init(1770000);
-    // // Set duty to 50%
-    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // // Update duty to apply the new value
-    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+    // // little loop for testing
+    // while(1){
+    //     frequency_count = 2000000;
+    //     example_ledc_init(frequency_count);
+    //     // Set duty to 50%
+    //     ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    //     // Update duty to apply the new value
+    //     ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+    //     printf("frequency: %d\n", frequency_count);
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
 
-    setResistorValue(50);
-    printf("resistance: %d\n", 50);
+    // }
+
+    
+
+    // while(1){ // just keep waiting
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     printf("frequency: %d\n", frequency_count);
+    // }
+
+    // setResistorValue(50);
+    // printf("resistance: %d\n", 50);
 
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
@@ -214,28 +233,28 @@ void app_main(void)
         // Update duty to apply the new value
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
         printf("frequency: %d\n", frequency_count);
-        // vTaskDelay(500 / portTICK_PERIOD_MS);
-        // frequency_count = frequency_count + 5000;
-        // if(frequency_count >1900000){
-        //     frequency_count = 1600000; // reset to 400KHz
-        // }
+        vTaskDelay(150 / portTICK_PERIOD_MS);
+        frequency_count = frequency_count + 5000;
+        if(frequency_count >2400000){
+            frequency_count = 1650000; // reset to frequency
+        }
 
         
-        for(int i = 6; i<12; i++){
-            setResistorValue(i);
-            printf("resistance: %d\n", i);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-        for(int i = 12; i<30; i++){
-            setResistorValue(i);
-            printf("resistance: %d\n", i);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-        for(int i = 30; i<100; i++){
-            setResistorValue(i);
-            printf("resistance: %d\n", i);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        // for(int i = 6; i<12; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", i);
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
+        // for(int i = 12; i<30; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", i);
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
+        // for(int i = 30; i<100; i++){
+        //     setResistorValue(i);
+        //     printf("resistance: %d\n", i);
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
 
         // uint32_t time_delay = 2000; // 2 secs
         // uint32_t res = 30;
