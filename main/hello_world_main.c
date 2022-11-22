@@ -19,6 +19,9 @@
 #include "driver/ledc.h"
 #include "esp_err.h"
 
+#include <driver/dac.h> // needed for DAC
+
+
 
 // START PWM STUFF !!!!!!!!!!!!!!!!!!!!!!!!
 #define LEDC_TIMER              LEDC_TIMER_0
@@ -150,8 +153,122 @@ static void setResistorValue(void* arg){
 
 }
 
+// notes about I2C protocol, we have 8 registers for
+// The TPS55289 operates as a target device with address 
+// 74h and 75h set by the MODE pin
+// START I2C STUFFFFFF
+#include <stdio.h>
+#include "esp_log.h"
+#include "driver/i2c.h"
+
+static const char *TAG = "i2c-simple-example";
+
+#define I2C_MASTER_SCL_IO           22      /*!< GPIO number used for I2C master clock */
+#define I2C_MASTER_SDA_IO           21      /*!< GPIO number used for I2C master data  */
+#define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the # of i2c peripheral interfaces available will depend on the chip */
+#define I2C_MASTER_FREQ_HZ          400000                     /*!< I2C master clock frequency */
+#define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_TIMEOUT_MS       1000
+
+#define TPS55289_SENSOR_ADDR                 0x74        /*!< Slave address of the TPS55289 sensor */
+
+#define TPS55289_RESET_BIT                   7
+
+//Read a sequence of bytes from a TPS55289 sensor registers
+static esp_err_t TPS55289_register_read(uint8_t reg_addr, uint8_t *data, size_t len)
+{
+    return i2c_master_write_read_device(I2C_MASTER_NUM, TPS55289_SENSOR_ADDR, &reg_addr, 1, data, len, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+}
+
+// Write a byte to a TPS55289 sensor register
+static esp_err_t TPS55289_register_write_byte(uint8_t reg_addr, uint8_t data)
+{
+    int ret;
+    uint8_t write_buf[2] = {reg_addr, data};
+
+    ret = i2c_master_write_to_device(I2C_MASTER_NUM, TPS55289_SENSOR_ADDR, write_buf, sizeof(write_buf), I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+
+    return ret;
+}
+
+// @brief i2c master initialization
+static esp_err_t i2c_master_init(void)
+{
+    int i2c_master_port = I2C_MASTER_NUM;
+
+    i2c_config_t conf = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = I2C_MASTER_SDA_IO,
+        .scl_io_num = I2C_MASTER_SCL_IO,
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .master.clk_speed = I2C_MASTER_FREQ_HZ,
+    };
+
+    i2c_param_config(i2c_master_port, &conf);
+
+    return i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+}
+// END I2C STUFFF
+
+
+
 void app_main(void)
 {
+    // I2C test cycle
+    uint8_t data[2];
+    ESP_ERROR_CHECK(i2c_master_init());
+    ESP_LOGI(TAG, "I2C initialized successfully");
+
+    /* Read the TPS55289 */
+    TPS55289_register_read(0x00, data, 1);
+    ESP_LOGI(TAG, "WHO_AM_I = %X", data[0]);
+    // printf(data);
+    TPS55289_register_read(0x01, data, 1);
+    ESP_LOGI(TAG, "WHO_AM_I = %X", data[0]);
+    // printf(data);
+    TPS55289_register_read(0x07, data, 1);
+    ESP_LOGI(TAG, "WHO_AM_I = %X", data[0]);
+
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+
+    dac_output_enable(DAC_CHANNEL_1);       // enable DAC at GPIO25
+    dac_output_voltage(DAC_CHANNEL_1, 200); // 2.59V to enable TPS55289
+    // could also try this
+    // gpio_set_level(DAC_CHANNEL_1, 1);
+
+
+    TPS55289_register_write_byte(0x06, 0b00100000); // OFF
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    TPS55289_register_write_byte(0x06, 0b10100000); // ON
+    printf("TPS55289 OUTPUT ON\n");
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    
+
+    TPS55289_register_write_byte(0x04, 0b00000011); // setting INTFB to 11b or .0564
+    // TPS55289_register_write_byte(0x04, 0b00000000); // setting INTFB to 00b or .2256
+
+
+    // loop for setting voltage for Buck Boost Converter
+    // int v_ref;
+    // float int_fb = .0564;
+    // float v_out; 
+    // for( v_ref = 0; v_ref<=2047; v_ref+=50){
+    //     v_out = v_ref/int_fb/1000.0;
+    //     int low = v_ref  &      0b11111111;
+    //     int high = (v_ref>>8) & 0b00000111;
+    //     printf("%d %d %d v_out = %f\n", v_ref, low, high, v_out);
+    //     TPS55289_register_write_byte(0x00, low); // setting low byte of ref voltage
+    //     TPS55289_register_write_byte(0x01, high); // setting high
+    //     vTaskDelay(2500 / portTICK_PERIOD_MS);
+    // }
+
+    // set register 04H to 00b so that INTFB is .2256 and we can get to lower voltages
+    // set register 04H to 03b so that INTFB is .0564 to get up to high voltages
+
+
 
     // START PWM STUFF !!!!!!!!!!!!!!!!!!!!!!!!
     // Set the LEDC peripheral configuration
@@ -189,7 +306,7 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
-    int frequency_count = 2000000; //1760000;
+    int frequency_count = 1360000; //1760000;
     // setResistorValue(30);  // set resistance to 300 ohms
     // printf("resistance: %d\n", 30);
     example_ledc_init(frequency_count);
@@ -211,15 +328,59 @@ void app_main(void)
 
     // }
 
-    
+    // // setResistorValue(50);
+    // // printf("resistance: %d\n", 50);
+    // int v_ref;
+    // float int_fb = .0564;
+    // float v_out; 
+    // v_ref = 200;
+    // v_out = v_ref/int_fb/1000.0;
+    // int low = v_ref  &      0b11111111;
+    // int high = (v_ref>>8) & 0b00000111;
+    // printf("%d %d %d v_out = %f\n", v_ref, low, high, v_out);
+    // TPS55289_register_write_byte(0x00, low); // setting low byte of ref voltage
+    // TPS55289_register_write_byte(0x01, high); // setting high
+    // vTaskDelay(2500 / portTICK_PERIOD_MS);
 
-    // while(1){ // just keep waiting
-    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
-    //     printf("frequency: %d\n", frequency_count);
-    // }
+    example_ledc_init(frequency_count);
+    // Set duty to 50%
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    // Update duty to apply the new value
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-    // setResistorValue(50);
-    // printf("resistance: %d\n", 50);
+    while(1){
+        int v_ref;
+        float int_fb = .0564;
+        float v_out; 
+
+        v_ref = 0;
+        v_out = v_ref/int_fb/1000.0;
+        int low = v_ref  &      0b11111111;
+        int high = (v_ref>>8) & 0b00000111;
+        printf("%d %d %d v_out = %f\n", v_ref, low, high, v_out);
+        printf("Wait 40 seconds for voltage to lower\n");
+        TPS55289_register_write_byte(0x00, low); // setting low byte of ref voltage
+        TPS55289_register_write_byte(0x01, high); // setting high
+        
+        vTaskDelay(40000 / portTICK_PERIOD_MS);
+        for( v_ref = 0; v_ref<=400; v_ref+=50){
+            v_out = v_ref/int_fb/1000.0;
+            int low = v_ref  &      0b11111111;
+            int high = (v_ref>>8) & 0b00000111;
+            printf("%d %d %d v_out = %f\n", v_ref, low, high, v_out);
+            TPS55289_register_write_byte(0x00, low); // setting low byte of ref voltage
+            TPS55289_register_write_byte(0x01, high); // setting high
+            vTaskDelay(2500 / portTICK_PERIOD_MS);
+        }
+
+    }
+
+
+
+    while(1){ // just keep waiting
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        printf("frequency: %d\n", frequency_count);
+    }
 
     while(1) {
         gpio_set_level(GPIO_OUTPUT_IO_0, 0); // enable pin set to low so that the multiplexer is working
@@ -233,10 +394,10 @@ void app_main(void)
         // Update duty to apply the new value
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
         printf("frequency: %d\n", frequency_count);
-        vTaskDelay(150 / portTICK_PERIOD_MS);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
         frequency_count = frequency_count + 5000;
-        if(frequency_count >2400000){
-            frequency_count = 1650000; // reset to frequency
+        if(frequency_count >1500000){
+            frequency_count = 1200000; // reset to frequency
         }
 
         
